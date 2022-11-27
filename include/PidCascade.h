@@ -11,8 +11,6 @@
 #include <vector>
 #include <memory>
 
-// Control
-#define MIN_ABS_SPEED 85
 
 // Control-params
 extern volatile bool motorInit;
@@ -39,6 +37,7 @@ class PidCascade : public RobotController
     int doRightControl(State state) override;
     int getLeftCommand() override;
     int getRightCommand() override;
+    void refresh() override;
     void executeNode( std::string node, State& state, double& result );
     
     private:

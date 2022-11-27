@@ -5,6 +5,7 @@
 #include "Wheel.h"
 
 // Actuator
+#define MIN_ABS_SPEED 80
 double motorSpeedFactorLeft = 1;
 double motorSpeedFactorRight = 1;
 MotorController motorController(S_MOTOR_A, F_MOTOR_A, R_MOTOR_A,

@@ -3,7 +3,7 @@
 volatile bool motorInit = false;
 
 // Control-params
-double setpoint = 90;
+double setpoint = -90;
 double sSetpoint = 0;
 double lSetpoint = 0;
 double rSetpoint = 0;
@@ -14,23 +14,23 @@ int moveState = 0; //0 = balance; 1 = back; 2 = forth
 
 // Balance gains
 double Kp = 16.7;
-double Kd = .1;
-double Ki = 13;
+double Kd = 5;
+double Ki = .001;
 
 // Speed Gains
 double sKp = 3;
-double sKd = .05;
-double sKi = 2;
+double sKd = 2;
+double sKi = .05;
 
 // Left wheel gains
 double lKp = 3;
-double lKd = .05;
-double lKi = 2;
+double lKd = 2;
+double lKi = .05;
 
 // Right wheel gains
 double rKp = 3;
-double rKd = .05;
-double rKi = 2;
+double rKd = 2;
+double rKi = .05;
 
 PidCascade::PidCascade():
     RobotController()
@@ -57,7 +57,7 @@ void PidCascade::setLeftMode(std::string mode)
 
 void PidCascade::setRightMode(std::string mode)
 {
-    this->leftMode = mode;
+    this->rightMode = mode;
 };
 
 void PidCascade::initControl() 
@@ -67,7 +67,6 @@ void PidCascade::initControl()
     PIDController lTurnPid;
     PIDController rTurnPid;
     anglePid.begin();
-    anglePid.setpoint(90);
     anglePid.tune(Kp, Ki, Kd);
     anglePid.setpoint(setpoint);
     anglePid.limit(-255, 255);
@@ -89,7 +88,6 @@ void PidCascade::initControl()
     this->addPid("rTurnPid", "speed", rTurnPid, getRightWheelSpeed);
     this->setLeftMode("pitch");
     this->setRightMode("pitch");
-    return;
 };
 
 int PidCascade::getLeftCommand() 
@@ -105,7 +103,7 @@ int PidCascade::getRightCommand()
 
 int PidCascade::doLeftControl(State state) 
 {
-    double output;
+    double output = 0;
     this->executeNode(this->leftMode, state, output);
     this->leftCommand = output;
     return output;
@@ -113,28 +111,36 @@ int PidCascade::doLeftControl(State state)
 
 int PidCascade::doRightControl(State state) 
 {
-    double output;
+    double output = 0;
     this->executeNode(this->rightMode, state, output);
     this->rightCommand = output;
     return output;
 };
 
+void PidCascade::refresh()
+{
+  for( auto& iMap : this->cascadeMap )
+  {
+    std::get<4>(iMap.second) = false;
+  }
+}
+
 void PidCascade::executeNode( std::string node, State& state, double& result )
 {
     std::string parent = std::get<2>(this->cascadeMap.at(node));
-    auto func = std::get<1>(this->cascadeMap.at(node));
+
+    // If node has already been executed, use 
+    if(std::get<4>(this->cascadeMap.at(node)) == true )
+    {
+        result = std::get<3>(this->cascadeMap.at(node));
+        return;
+    }
     if( parent != "PRIMARY")
     {
-        // If node has already been executed, use 
-        if(std::get<4>(this->cascadeMap.at(node)) == true )
-        {
-            result = std::get<3>(this->cascadeMap.at(node));
-        }
-        else
-        {
-            this->executeNode(parent, state, result);
-        }
+      this->executeNode(parent, state, result);
     }
+
+    auto func = std::get<1>(this->cascadeMap.at(node));
     result = std::get<0>(this->cascadeMap.at(node))->compute(func(state) + result);
     std::get<3>(this->cascadeMap.at(node)) = result;
     std::get<4>(this->cascadeMap.at(node)) = true;

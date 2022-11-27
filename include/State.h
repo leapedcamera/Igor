@@ -12,7 +12,7 @@ struct State
 
 static double getPitch(State state)
 {
-    return state.ypr[1];
+    return state.ypr[2];
 }
 static double getLeftWheelSpeed(State state)
 {

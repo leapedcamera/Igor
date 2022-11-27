@@ -13,6 +13,10 @@ public:
     virtual int doRightControl(State state) = 0;
     virtual int getLeftCommand() = 0;
     virtual int getRightCommand() = 0;
+    virtual void refresh()
+    { 
+       // Do nothing
+    };
 };
 
 
